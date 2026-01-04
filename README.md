@@ -31,7 +31,7 @@ Install dependencies:
 pip install -r requirements.txt
 
 
----
+
 ## Create .env file in the project root with the following values:
 
 GROQ_API_KEY=api_key_you_created
@@ -39,19 +39,19 @@ GROQ_MODEL=llama-3.1-8b-instant
 
 - You can use .env.example as a reference.
 
----
+
 
 ## How to run it?
 
 uvicorn app:app --reload
 
----
+
 
 ## Where to see your CHATBOT?
 
 After running the app locally, open your browser it will be available at http://127.0.0.1:8000 (If port 8000 is already in use, uvicorn will print the active port in the terminal.)
 
----
+
 
 ## Notes
 
