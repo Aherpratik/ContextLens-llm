@@ -1,8 +1,9 @@
-# Constraint ChatBot
+# ContextLens
 
-A lightweight web chatbot that answers any question while letting the user control:
-1) Selecting Audience (Beginner / Intermediate / Expert)
-2) Depth of an Answer  (Quick / Balanced / Natural)
+ContextLens is a lightweight web-based chatbot that answers any question while letting users
+control the audience and depth of the response, so the same AI output can be viewed through
+different contextual lenses.
+
 
 Includes small visual easter eggs (e.g., “happy new year”, “today is my birthday”).
 
