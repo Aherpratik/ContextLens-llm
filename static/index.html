@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ContextLens</title>
+
+
+
+
+    <style>
+        :root {
+            --bg: #0b1220;
+            --panel: #0f172a;
+            --card: #0b1220;
+            --border: #1f2a44;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --accent: #2563eb;
+
+            --userBubble: #1d2b5a;
+            --assistantBubble: #111827;
+            --inputBg: #0b1220;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+            background: radial-gradient(1200px 600px at 30% 10%, rgba(37, 99, 235, 0.18), transparent 55%),
+                radial-gradient(900px 500px at 90% 20%, rgba(16, 185, 129, 0.12), transparent 55%),
+                var(--bg);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 28px auto;
+            padding: 0 16px;
+        }
+
+        .header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+        }
+
+        .subtitle {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.35;
+        }
+
+        .controls {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            margin: 14px 0;
+        }
+
+        label {
+            font-size: 13px;
+            color: var(--muted);
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        select,
+        button,
+        input {
+            padding: 10px 12px;
+            font-size: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+            outline: none;
+        }
+
+        select {
+            min-width: 260px;
+        }
+
+        button {
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.10);
+        }
+
+        button.primary {
+            background: var(--accent);
+            border: none;
+            color: white;
+            font-weight: 700;
+        }
+
+        button.primary:hover {
+            opacity: 0.95;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .chat {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            height: 470px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .bubble {
+            max-width: 86%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            line-height: 1.45;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .bubble.user {
+            align-self: flex-end;
+            background: rgba(37, 99, 235, 0.18);
+        }
+
+        .bubble.assistant {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .meta {
+            font-weight: 800;
+            font-size: 12px;
+            color: rgba(229, 231, 235, 0.8);
+            margin-bottom: 6px;
+        }
+
+        .inputRow {
+            display: flex;
+            gap: 12px;
+            margin-top: 14px;
+            align-items: center;
+        }
+
+        #message {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            padding: 12px 14px;
+            border-radius: 12px;
+        }
+
+        .footer {
+            margin-top: 12px;
+            font-size: 12px;
+            color: rgba(229, 231, 235, 0.7);
+            text-align: center;
+        }
+
+        /* FX canvas overlay */
+        #fx {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+    </style>
+</head>
+
+
+<body>
+    <canvas id="fx"></canvas>
+
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>ContextLens</h1>
+                <div class="subtitle">
+                    See the same answer through different lenses.
+                </div>
+
+            </div>
+        </div>
+
+        <div class="controls">
+            <div>
+                <label>Audience</label><br />
+                <select id="audience">
+                    <option>Beginner </option>
+                    <option>Intermediate </option>
+                    <option>Expert </option>
+                </select>
+            </div>
+
+            <div>
+                <label>Answer depth</label><br />
+                <select id="length">
+                    <option value="Quick answer ">Quick</option>
+                    <option value="Balanced answer " selected>Balanced</option>
+                    <option value="Natural answer ">Natural</option>
+                </select>
+            </div>
+
+            <button id="regen">Regenerate</button>
+            <button id="clear">Clear chat</button>
+        </div>
+
+        <div class="chat" id="chat"></div>
+
+        <div class="inputRow">
+            <input id="message" placeholder="Ask anything…" />
+            <button class="primary" id="send">Send</button>
+        </div>
+
+        <div class="footer">Open model by Pratik Aher</div>
+    </div>
+
+    <script>
+        const chat = document.getElementById("chat");
+        const input = document.getElementById("message");
+        const send = document.getElementById("send");
+        const clear = document.getElementById("clear");
+        const regen = document.getElementById("regen");
+
+        const audience = document.getElementById("audience");
+        const length = document.getElementById("length");
+
+        let history = [];
+
+        function escapeHtml(str) {
+            return (str || "").replace(/[&<>"']/g, m => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;"
+            }[m]));
+        }
+
+        function addBubble(role, text) {
+            const div = document.createElement("div");
+            div.className = "bubble " + role;
+
+            const who = role === "user" ? "You" : "Assistant";
+            div.innerHTML = `<div class="meta">${who}</div>${escapeHtml(text).replace(/\n/g, "<br/>")}`;
+
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function addThinking() {
+            removeThinking();
+            const div = document.createElement("div");
+            div.className = "bubble assistant";
+            div.id = "thinking";
+            div.innerHTML = `<div class="meta">Assistant</div>Assistant is thinking…`;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function removeThinking() {
+            const t = document.getElementById("thinking");
+            if (t) t.remove();
+        }
+
+        async function callChatAPI(messageText, historyToSend) {
+            const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message: messageText,
+                    audience: audience.value,
+                    length: length.value,
+                    history: historyToSend
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.detail || "Request failed");
+            return data;
+        }
+
+        async function sendMessage() {
+            const text = input.value.trim();
+            if (!text) return;
+
+            addBubble("user", text);
+            maybeTriggerFx(text);
+
+            input.value = "";
+            send.disabled = true;
+            regen.disabled = true;
+
+            addThinking();
+
+            try {
+                const data = await callChatAPI(text, history);
+                removeThinking();
+                history = data.history || [];
+                addBubble("assistant", data.answer || "");
+            } catch (e) {
+                removeThinking();
+                addBubble("assistant", "Something went wrong. Please try again.");
+            } finally {
+                send.disabled = false;
+                regen.disabled = false;
+                input.focus();
+            }
+        }
+
+        // Regenerate last assistant response using the previous user message
+        regen.addEventListener("click", async () => {
+            if (history.length < 2) return;
+
+            // history ends with: user, assistant
+            const lastUser = history[history.length - 2]?.content;
+            if (!lastUser) return;
+
+            addBubble("user", lastUser);
+            maybeTriggerFx(lastUser);
+
+            send.disabled = true;
+            regen.disabled = true;
+
+            addThinking();
+
+            try {
+                const trimmedHistory = history.slice(0, -2); // remove last turn
+                const data = await callChatAPI(lastUser, trimmedHistory);
+                removeThinking();
+                history = data.history || [];
+                addBubble("assistant", data.answer || "");
+            } catch (e) {
+                removeThinking();
+                addBubble("assistant", "Something went wrong. Please try again.");
+            } finally {
+                send.disabled = false;
+                regen.disabled = false;
+                input.focus();
+            }
+        });
+
+        clear.addEventListener("click", () => {
+            history = [];
+            chat.innerHTML = "";
+            input.focus();
+        });
+
+        send.addEventListener("click", sendMessage);
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+
+        input.focus();
+
+        // -------------------------
+        // Animations for fun twist
+        // -------------------------
+        const fxCanvas = document.getElementById("fx");
+        const fx = fxCanvas.getContext("2d");
+        let W = 0, H = 0;
+        let particles = [];
+        let fxTimer = null;
+
+        function resizeFx() {
+            W = fxCanvas.width = window.innerWidth;
+            H = fxCanvas.height = window.innerHeight;
+        }
+        window.addEventListener("resize", resizeFx);
+        resizeFx();
+
+        function rand(min, max) { return Math.random() * (max - min) + min; }
+
+        function startFx(durationMs = 2000) {
+            if (fxTimer) clearTimeout(fxTimer);
+            fxTimer = setTimeout(() => { particles = []; }, durationMs);
+            requestAnimationFrame(tickFx);
+        }
+
+        function tickFx() {
+            fx.clearRect(0, 0, W, H);
+            particles = particles.filter(p => p.life > 0);
+
+            for (const p of particles) {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += p.g;
+                p.rot += p.vr;
+                p.life -= 1;
+
+                fx.save();
+                fx.translate(p.x, p.y);
+                fx.rotate(p.rot);
+
+                fx.globalAlpha = Math.max(0, Math.pow(p.life / p.maxLife, 0.85));
+                fx.fillStyle = p.color;
+
+                if (p.type === "confetti") {
+                    fx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                } else if (p.type === "balloon") {
+                    fx.beginPath();
+                    fx.ellipse(0, 0, p.r * 0.85, p.r, 0, 0, Math.PI * 2);
+                    fx.fill();
+
+                    // string
+                    fx.globalAlpha *= 0.9;
+                    fx.strokeStyle = "rgba(229,231,235,0.65)";
+                    fx.lineWidth = 1;
+                    fx.beginPath();
+                    fx.moveTo(0, p.r);
+                    fx.bezierCurveTo(6, p.r + 20, -6, p.r + 40, 0, p.r + 60);
+                    fx.stroke();
+                }
+
+                fx.restore();
+            }
+
+            if (particles.length > 0) requestAnimationFrame(tickFx);
+        }
+
+        function launchConfettiBurst(count = 120) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    type: "confetti",
+                    x: rand(W * 0.2, W * 0.8),
+                    y: rand(H * 0.12, H * 0.35),
+
+                    // SLOWER movement
+                    vx: rand(-2.5, 2.5),
+                    vy: rand(-6, -2),
+
+                    // LIGHTER gravity
+                    g: 0.08,
+
+                    w: rand(6, 10),
+                    h: rand(8, 14),
+
+                    rot: rand(0, Math.PI),
+                    vr: rand(-0.12, 0.12),
+
+                    color: `hsl(${Math.floor(rand(0, 360))} 85% 60%)`,
+
+                    // LONGER life
+                    life: Math.floor(rand(120, 160)),
+                    maxLife: 160
+                });
+            }
+
+            // KEEP FX RUNNING LONGER
+            startFx(4200);
+        }
+
+
+        function launchBalloons(count = 10) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    type: "balloon",
+                    x: rand(W * 0.15, W * 0.85),
+                    y: H + rand(10, 200),
+
+                    // VERY slow drift
+                    vx: rand(-0.15, 0.15),
+                    vy: rand(-0.9, -0.6),
+
+                    // Almost no gravity
+                    g: -0.001,
+
+                    r: rand(20, 32),
+
+                    rot: rand(-0.1, 0.1),
+                    vr: rand(-0.006, 0.006),
+
+                    color: `hsl(${Math.floor(rand(0, 360))} 80% 60%)`,
+
+                    // Longer life
+                    life: 360,
+                    maxLife: 360
+                });
+            }
+
+            startFx(5200);
+        }
+
+
+        function maybeTriggerFx(text) {
+            const t = (text || "").toLowerCase();
+
+            // Happy new year / new year
+            if (t.includes("happy new year") || t.includes("new year")) {
+                launchConfettiBurst(180);
+                return;
+            }
+
+            // Birthday
+            if (
+                t.includes("today is my birthday") ||
+                t.includes("it's my birthday") ||
+                t.includes("it’s my birthday") ||
+                t.includes("my birthday")
+            ) {
+                launchBalloons(12);
+                setTimeout(() => launchConfettiBurst(240), 420);
+                return;
+            }
+
+            // Congrats
+            if (t.includes("congrats") || t.includes("congratulations")) {
+                launchConfettiBurst(110);
+                return;
+            }
+        }
+    </script>
+</body>
+
+</html>
