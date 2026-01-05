@@ -37,7 +37,7 @@ pip install -r requirements.txt
 GROQ_API_KEY=api_key_you_created
 GROQ_MODEL=llama-3.1-8b-instant
 
-- You can use .env.example as a reference.
+- You can use config.env_example as a reference.
 
 
 
